@@ -16,18 +16,12 @@ const TaskpaneContent = () => {
 
   const { refreshData } = useExcelData();
 
-  const fetchConversations = useCallback(async () => {
-    const res = await fetch("/api/conversations");
-    if (res.ok) {
-      const data = await res.json();
-      setConversations(data);
-    }
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleConversationCreated = useCallback((id: string) => {
     setActiveConversationId(id);
-    fetchConversations();
-  }, [fetchConversations]);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   const { messages, isStreaming, sendMessage, loadMessages } = useChat({
     conversationId: activeConversationId,
@@ -46,7 +40,7 @@ const TaskpaneContent = () => {
     };
     load();
     return () => { cancelled = true; };
-  }, [status]);
+  }, [status, refreshKey]);
 
   const handleSelectConversation = async (id: string) => {
     setActiveConversationId(id);

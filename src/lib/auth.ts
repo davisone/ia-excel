@@ -5,6 +5,7 @@ import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     AzureADProvider({
       clientId: process.env.MICROSOFT_CLIENT_ID!,

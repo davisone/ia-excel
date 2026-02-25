@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Message, ExcelData } from "@/types";
 
 interface UseChatOptions {
@@ -11,6 +11,12 @@ interface UseChatOptions {
 export const useChat = ({ conversationId, onConversationCreated }: UseChatOptions) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const sendMessage = useCallback(async (content: string, excelData: ExcelData | null) => {
     const userMessage: Message = {
@@ -74,30 +80,36 @@ export const useChat = ({ conversationId, onConversationCreated }: UseChatOption
             onConversationCreated?.(parsed.conversationId);
           }
 
-          setMessages((prev) => {
-            const updated = [...prev];
-            const last = updated[updated.length - 1];
-            if (last.role === "assistant") {
-              updated[updated.length - 1] = { ...last, content: last.content + parsed.content };
-            }
-            return updated;
-          });
+          if (mountedRef.current) {
+            setMessages((prev) => {
+              const updated = [...prev];
+              const last = updated[updated.length - 1];
+              if (last.role === "assistant") {
+                updated[updated.length - 1] = { ...last, content: last.content + parsed.content };
+              }
+              return updated;
+            });
+          }
         }
       }
     } catch {
-      setMessages((prev) => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last.role === "assistant") {
-          updated[updated.length - 1] = {
-            ...last,
-            content: "Désolé, une erreur est survenue. Veuillez réessayer.",
-          };
-        }
-        return updated;
-      });
+      if (mountedRef.current) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last.role === "assistant") {
+            updated[updated.length - 1] = {
+              ...last,
+              content: "Désolé, une erreur est survenue. Veuillez réessayer.",
+            };
+          }
+          return updated;
+        });
+      }
     } finally {
-      setIsStreaming(false);
+      if (mountedRef.current) {
+        setIsStreaming(false);
+      }
     }
   }, [conversationId, onConversationCreated]);
 
