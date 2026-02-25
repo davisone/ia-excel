@@ -2,6 +2,8 @@
 <OfficeApp
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
   xsi:type="TaskPaneApp">
 
   <Id>742EA715-2E5E-4208-B6E2-78631DC0786F</Id>
@@ -10,6 +12,13 @@
   <DefaultLocale>fr-FR</DefaultLocale>
   <DisplayName DefaultValue="Assistant Comptable IA" />
   <Description DefaultValue="Assistant IA pour experts-comptables, intégré à Excel." />
+  <IconUrl DefaultValue="https://ia-excel.vercel.app/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://ia-excel.vercel.app/assets/icon-80.png" />
+  <SupportUrl DefaultValue="https://ia-excel.vercel.app" />
+
+  <AppDomains>
+    <AppDomain>https://ia-excel.vercel.app</AppDomain>
+  </AppDomains>
 
   <Hosts>
     <Host Name="Workbook" />
@@ -21,15 +30,21 @@
 
   <Permissions>ReadWriteDocument</Permissions>
 
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="VersionOverridesV1_0">
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+
     <Hosts>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
-              <Group id="CommandGroup">
+              <Group id="AssistantGroup">
                 <Label resid="GroupLabel" />
-                <Control xsi:type="Button" id="TaskpaneButton">
+                <Icon>
+                  <bt:Image size="16" resid="Icon16" />
+                  <bt:Image size="32" resid="Icon32" />
+                  <bt:Image size="80" resid="Icon80" />
+                </Icon>
+                <Control xsi:type="Button" id="AssistantButton">
                   <Label resid="ButtonLabel" />
                   <Supertip>
                     <Title resid="ButtonLabel" />
@@ -69,5 +84,7 @@
         <bt:String id="ButtonTooltip" DefaultValue="Ouvrir l'assistant comptable IA pour analyser vos données." />
       </bt:LongStrings>
     </Resources>
+
   </VersionOverrides>
+
 </OfficeApp>
