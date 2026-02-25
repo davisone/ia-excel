@@ -26,20 +26,28 @@ export const TaskpaneContent = () => {
     onConversationCreated: handleConversationCreated,
   });
 
+  const checkAuth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      const data = await res.json();
+      setIsAuthenticated(!!data?.user);
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    const checkAuth = async () => {
+    const check = async () => {
       try {
         const res = await fetch("/api/auth/session");
         const data = await res.json();
-        if (!cancelled) {
-          setIsAuthenticated(!!data?.user);
-        }
+        if (!cancelled) setIsAuthenticated(!!data?.user);
       } catch {
         if (!cancelled) setIsAuthenticated(false);
       }
     };
-    checkAuth();
+    check();
     return () => { cancelled = true; };
   }, []);
 
@@ -78,9 +86,38 @@ export const TaskpaneContent = () => {
     sendMessage(content, excelData);
   };
 
-  const handleSignIn = () => {
-    window.location.href = "/api/auth/signin/azure-ad";
-  };
+  const handleSignIn = useCallback(() => {
+    const dialogUrl = `${window.location.origin}/auth/login`;
+
+    Office.context.ui.displayDialogAsync(
+      dialogUrl,
+      { height: 60, width: 40, promptBeforeOpen: false },
+      (asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+          return;
+        }
+        const dialog = asyncResult.value;
+
+        dialog.addEventHandler(
+          Office.EventType.DialogMessageReceived,
+          (args: { message: string; origin: string | undefined } | { error: number }) => {
+            if ("message" in args && args.message === "auth_complete") {
+              dialog.close();
+              checkAuth();
+            }
+          }
+        );
+
+        dialog.addEventHandler(
+          Office.EventType.DialogEventReceived,
+          () => {
+            // Dialog fermé manuellement - re-vérifier l'auth
+            checkAuth();
+          }
+        );
+      }
+    );
+  }, [checkAuth]);
 
   if (isAuthenticated === null) {
     return (
