@@ -9,7 +9,7 @@ const TaskpaneLayout = ({ children }: { children: React.ReactNode }) => {
     <>
       <Script
         src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"
-        strategy="beforeInteractive"
+        strategy="afterInteractive"
       />
       <div className="h-screen overflow-hidden bg-white">
         {children}
