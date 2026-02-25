@@ -11,11 +11,19 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.MICROSOFT_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
       tenantId: "common",
+      authorization: {
+        params: {
+          scope: "openid profile email User.Read",
+        },
+      },
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (!account || !user.email || !user.name) return false;
+      if (!account) return false;
+
+      const email = user.email ?? "";
+      const name = user.name ?? email ?? "Utilisateur";
 
       const existing = await db.query.users.findFirst({
         where: eq(users.microsoftId, account.providerAccountId),
@@ -23,8 +31,8 @@ export const authOptions: NextAuthOptions = {
 
       if (!existing) {
         await db.insert(users).values({
-          email: user.email,
-          name: user.name,
+          email,
+          name,
           microsoftId: account.providerAccountId,
         });
       }
