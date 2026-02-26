@@ -20,14 +20,29 @@ const AuthSuccessPage = () => {
       // Charger Office.js et envoyer le token au taskpane
       const script = document.createElement("script");
       script.src = "https://appsforoffice.microsoft.com/lib/1/hosted/office.js";
+      script.onerror = () => {
+        setStatus("Erreur de chargement Office.js. Fermez cette fenêtre manuellement.");
+      };
       script.onload = () => {
         Office.onReady(() => {
-          Office.context.ui.messageParent(JSON.stringify({ type: "auth_complete", token }));
+          try {
+            Office.context.ui.messageParent(
+              JSON.stringify({ type: "auth_complete", token })
+            );
+            setStatus("Fermeture en cours...");
+          } catch {
+            // Fallback : messageParent non disponible (Desktop Windows)
+            // Stocker le token pour que le taskpane puisse le récupérer
+            try {
+              localStorage.setItem("auth_token_transfer", token);
+            } catch {
+              // localStorage peut ne pas être disponible
+            }
+            setStatus("Connexion réussie ! Vous pouvez fermer cette fenêtre.");
+          }
         });
       };
       document.head.appendChild(script);
-
-      setStatus("Fermeture en cours...");
     };
 
     init();

@@ -192,7 +192,18 @@ export const TaskpaneContent = () => {
         dialog.addEventHandler(
           Office.EventType.DialogEventReceived,
           () => {
-            // Dialog fermé manuellement
+            // Dialog fermé manuellement — vérifier si un token a été déposé (fallback Desktop)
+            try {
+              const transferToken = localStorage.getItem("auth_token_transfer");
+              if (transferToken) {
+                localStorage.removeItem("auth_token_transfer");
+                tokenRef.current = transferToken;
+                sessionStorage.setItem("auth_token", transferToken);
+                setIsAuthenticated(true);
+              }
+            } catch {
+              // localStorage non disponible
+            }
           }
         );
       }
