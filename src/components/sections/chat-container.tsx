@@ -11,6 +11,7 @@ interface ChatContainerProps {
   isStreaming: boolean;
   onSend: (message: string) => void;
   onToggleSidebar?: () => void;
+  onSignOut?: () => void;
 }
 
 const suggestions = [
@@ -19,7 +20,7 @@ const suggestions = [
   "Explique-moi cette écriture",
 ];
 
-export const ChatContainer = ({ messages, isStreaming, onSend, onToggleSidebar }: ChatContainerProps) => {
+export const ChatContainer = ({ messages, isStreaming, onSend, onToggleSidebar, onSignOut }: ChatContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,17 +45,30 @@ export const ChatContainer = ({ messages, isStreaming, onSend, onToggleSidebar }
             </div>
           </div>
         </div>
-        {onToggleSidebar && (
-          <button
-            onClick={onToggleSidebar}
-            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-white/50 hover:text-gray-600"
-            title="Historique"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-white/50 hover:text-gray-600"
+              title="Historique"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </button>
+          )}
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+              title="Se déconnecter"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

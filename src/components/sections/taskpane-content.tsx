@@ -123,6 +123,15 @@ export const TaskpaneContent = () => {
     }
   };
 
+  const handleSignOut = useCallback(() => {
+    tokenRef.current = null;
+    sessionStorage.removeItem("auth_token");
+    setIsAuthenticated(false);
+    setActiveConversationId(null);
+    setConversations([]);
+    loadMessages([]);
+  }, [loadMessages]);
+
   const handleSend = async (content: string) => {
     // Ne jamais bloquer l'envoi si Excel n'est pas dispo
     let excelData = null;
@@ -242,6 +251,7 @@ export const TaskpaneContent = () => {
           isStreaming={isStreaming}
           onSend={handleSend}
           onToggleSidebar={() => setShowSidebar(!showSidebar)}
+          onSignOut={handleSignOut}
         />
       </div>
     </div>
