@@ -99,6 +99,17 @@ export const TaskpaneContent = () => {
     setShowSidebar(false);
   };
 
+  const handleDeleteConversation = async (id: string) => {
+    const res = await authFetch(`/api/conversations/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeConversationId === id) {
+        setActiveConversationId(null);
+        loadMessages([]);
+      }
+    }
+  };
+
   const handleSend = async (content: string) => {
     // Ne jamais bloquer l'envoi si Excel n'est pas dispo
     let excelData = null;
@@ -205,6 +216,7 @@ export const TaskpaneContent = () => {
               activeId={activeConversationId}
               onSelect={handleSelectConversation}
               onNew={handleNewConversation}
+              onDelete={handleDeleteConversation}
             />
           </div>
         </>
