@@ -151,22 +151,31 @@ export const TaskpaneContent = () => {
 
   if (isAuthenticated === null) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-400">Chargement...</p>
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-pink-50/50 via-white to-purple-50/50">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 animate-bounce rounded-full bg-gradient-to-br from-pink-400 to-violet-400 [animation-delay:-0.3s]" />
+          <div className="h-2 w-2 animate-bounce rounded-full bg-gradient-to-br from-pink-400 to-violet-400 [animation-delay:-0.15s]" />
+          <div className="h-2 w-2 animate-bounce rounded-full bg-gradient-to-br from-pink-400 to-violet-400" />
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 p-6">
-        <h1 className="text-lg font-semibold text-gray-900">Assistant Comptable Julie</h1>
-        <p className="text-center text-sm text-gray-500">
-          Connectez-vous avec votre compte Microsoft pour accéder à l&apos;assistant.
-        </p>
+      <div className="flex h-screen flex-col items-center justify-center gap-6 bg-gradient-to-br from-pink-50/50 via-white to-purple-50/50 p-6">
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 text-3xl font-bold text-white shadow-lg">
+          J
+        </div>
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-900">Assistant Comptable Julie</h1>
+          <p className="mt-1.5 text-sm text-gray-400">
+            Connectez-vous pour accéder à votre assistante.
+          </p>
+        </div>
         <button
           onClick={handleSignIn}
-          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 px-8 py-3 text-sm font-medium text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
         >
           Se connecter avec Microsoft
         </button>
@@ -178,7 +187,7 @@ export const TaskpaneContent = () => {
     <div className="flex h-screen">
       <button
         onClick={() => setShowSidebar(!showSidebar)}
-        className="fixed left-2 top-2 z-20 rounded-lg bg-white p-1.5 text-gray-600 shadow-md hover:bg-gray-50"
+        className="fixed left-2 top-14 z-20 rounded-xl border border-white/40 bg-white/60 p-1.5 text-gray-600 shadow-sm backdrop-blur-sm hover:bg-white/80"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

@@ -16,11 +16,11 @@ export const ConversationList = ({
   onNew,
 }: ConversationListProps) => {
   return (
-    <div className="flex h-full flex-col border-r border-gray-200 bg-gray-50">
+    <div className="flex h-full flex-col border-r border-white/30 bg-white/60 backdrop-blur-xl">
       <div className="p-3">
         <button
           onClick={onNew}
-          className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="w-full rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
         >
           + Nouvelle conversation
         </button>
@@ -30,11 +30,13 @@ export const ConversationList = ({
           <button
             key={conv.id}
             onClick={() => onSelect(conv.id)}
-            className={`w-full border-b border-gray-100 px-4 py-3 text-left text-sm transition-colors hover:bg-gray-100 ${
-              activeId === conv.id ? "bg-blue-50 font-medium" : ""
+            className={`w-full border-b border-white/20 px-4 py-3 text-left text-sm transition-all hover:bg-pink-50/50 ${
+              activeId === conv.id
+                ? "bg-gradient-to-r from-pink-50 to-violet-50 font-medium"
+                : ""
             }`}
           >
-            <p className="truncate">{conv.title}</p>
+            <p className="truncate text-gray-900">{conv.title}</p>
             <p className="mt-0.5 text-xs text-gray-400">
               {new Date(conv.updatedAt).toLocaleDateString("fr-FR")}
             </p>
