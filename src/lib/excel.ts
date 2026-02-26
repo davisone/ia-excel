@@ -231,24 +231,24 @@ const applyFormat = async (
   action: ExcelAction & { type: "format" },
 ) => {
   const fmt = action.format;
+  if (!fmt || typeof fmt !== "object") return;
 
-  if (fmt.bold !== undefined) {
+  if (typeof fmt.bold === "boolean") {
     range.format.font.bold = fmt.bold;
   }
-  if (fmt.italic !== undefined) {
+  if (typeof fmt.italic === "boolean") {
     range.format.font.italic = fmt.italic;
   }
-  if (fmt.fill) {
+  if (typeof fmt.fill === "string" && fmt.fill) {
     range.format.fill.color = fmt.fill;
   }
-  if (fmt.fontColor) {
+  if (typeof fmt.fontColor === "string" && fmt.fontColor) {
     range.format.font.color = fmt.fontColor;
   }
-  if (fmt.fontSize) {
+  if (typeof fmt.fontSize === "number" && fmt.fontSize > 0) {
     range.format.font.size = fmt.fontSize;
   }
-  if (fmt.numberFormat) {
-    // Charger les dimensions pour construire un tableau 2D correct
+  if (typeof fmt.numberFormat === "string" && fmt.numberFormat) {
     range.load("rowCount, columnCount");
     await context.sync();
     const nf: string[][] = [];
@@ -261,16 +261,18 @@ const applyFormat = async (
     }
     range.numberFormat = nf;
   }
-  if (fmt.horizontalAlignment) {
+  if (typeof fmt.horizontalAlignment === "string" && fmt.horizontalAlignment) {
     const alignMap: Record<string, Excel.HorizontalAlignment> = {
       left: Excel.HorizontalAlignment.left,
       center: Excel.HorizontalAlignment.center,
       right: Excel.HorizontalAlignment.right,
     };
-    range.format.horizontalAlignment = alignMap[fmt.horizontalAlignment];
+    const mapped = alignMap[fmt.horizontalAlignment.toLowerCase()];
+    if (mapped) {
+      range.format.horizontalAlignment = mapped;
+    }
   }
-  if (fmt.borders) {
-    const border = range.format.borders;
+  if (fmt.borders === true) {
     const edges: Excel.BorderIndex[] = [
       Excel.BorderIndex.edgeTop,
       Excel.BorderIndex.edgeBottom,
@@ -278,8 +280,8 @@ const applyFormat = async (
       Excel.BorderIndex.edgeRight,
     ];
     for (const edge of edges) {
-      const b = border.getItem(edge);
-      b.style = "Thin" as Excel.BorderLineStyle;
+      const b = range.format.borders.getItem(edge);
+      b.style = "Thin" as unknown as Excel.BorderLineStyle;
       b.color = "#000000";
     }
   }
