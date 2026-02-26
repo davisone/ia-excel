@@ -56,11 +56,18 @@ export const POST = async (req: NextRequest) => {
   ];
 
   // Appel OpenAI en streaming
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: openaiMessages,
-    stream: true,
-  });
+  let stream;
+  try {
+    stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: openaiMessages,
+      stream: true,
+    });
+  } catch (err) {
+    console.error("[OpenAI] Erreur lors de l'appel:", err);
+    const status = err instanceof OpenAI.APIError ? err.status ?? 502 : 502;
+    return new Response("Le service IA est temporairement indisponible. Réessayez dans quelques instants.", { status });
+  }
 
   // Collecter la réponse complète pour la sauvegarder
   let fullResponse = "";
@@ -68,20 +75,39 @@ export const POST = async (req: NextRequest) => {
   const encoder = new TextEncoder();
   const readableStream = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content ?? "";
-        if (content) {
-          fullResponse += content;
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content, conversationId: convId })}\n\n`));
+      try {
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content ?? "";
+          if (content) {
+            fullResponse += content;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content, conversationId: convId })}\n\n`));
+          }
+        }
+
+        // Sauvegarder la réponse complète de l'assistant
+        if (fullResponse) {
+          await db.insert(messages).values({
+            conversationId: convId!,
+            role: "assistant",
+            content: fullResponse,
+          });
+        }
+      } catch (err) {
+        console.error("[OpenAI] Erreur pendant le streaming:", err);
+        const errorMsg = fullResponse
+          ? "\n\n*[Réponse interrompue — une erreur est survenue]*"
+          : "Désolé, une erreur est survenue avec le service IA. Réessayez dans quelques instants.";
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: errorMsg, conversationId: convId })}\n\n`));
+
+        // Sauvegarder la réponse partielle si elle existe
+        if (fullResponse) {
+          await db.insert(messages).values({
+            conversationId: convId!,
+            role: "assistant",
+            content: fullResponse + errorMsg,
+          });
         }
       }
-
-      // Sauvegarder la réponse complète de l'assistant
-      await db.insert(messages).values({
-        conversationId: convId!,
-        role: "assistant",
-        content: fullResponse,
-      });
 
       controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       controller.close();
