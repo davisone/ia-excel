@@ -38,7 +38,8 @@ export const ensureOfficeReady = (): Promise<void> => {
 };
 
 // Nettoie une adresse de range (retire le nom de feuille si présent)
-const cleanRange = (range: string): string => {
+const cleanRange = (range: string | undefined): string | null => {
+  if (!range) return null;
   // "Feuil1!A1:B5" → "A1:B5"
   const idx = range.indexOf("!");
   return idx !== -1 ? range.slice(idx + 1) : range;
@@ -119,17 +120,32 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
       for (let i = 0; i < block.actions.length; i++) {
         const action = block.actions[i];
         const rangeAddr = cleanRange(action.range);
+
+        if (!rangeAddr) {
+          console.warn(`[Excel] Action ${i + 1} ignorée : range manquant`, action);
+          continue;
+        }
+
         console.log(`[Excel] Action ${i + 1}/${block.actions.length}: ${action.type} sur ${rangeAddr}`);
 
         switch (action.type) {
           case "write": {
+            if (!action.values) {
+              console.warn(`[Excel] Action write ignorée : values manquant`);
+              continue;
+            }
             await applyWrite(context, sheet, rangeAddr, action.values);
             break;
           }
 
-          case "formula":
+          case "formula": {
+            if (!action.formula) {
+              console.warn(`[Excel] Action formula ignorée : formula manquant`);
+              continue;
+            }
             await applyFormula(context, sheet, rangeAddr, action.formula);
             break;
+          }
 
           case "format": {
             const range = sheet.getRange(rangeAddr);
