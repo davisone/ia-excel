@@ -99,6 +99,19 @@ export const TaskpaneContent = () => {
     setShowSidebar(false);
   };
 
+  const handleRenameConversation = async (id: string, title: string) => {
+    const res = await authFetch(`/api/conversations/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    if (res.ok) {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title } : c))
+      );
+    }
+  };
+
   const handleDeleteConversation = async (id: string) => {
     const res = await authFetch(`/api/conversations/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -216,6 +229,7 @@ export const TaskpaneContent = () => {
               activeId={activeConversationId}
               onSelect={handleSelectConversation}
               onNew={handleNewConversation}
+              onRename={handleRenameConversation}
               onDelete={handleDeleteConversation}
             />
           </div>
