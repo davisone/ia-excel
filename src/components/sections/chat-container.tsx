@@ -25,7 +25,7 @@ export const ChatContainer = ({ messages, isStreaming, onSend }: ChatContainerPr
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <div className="text-center text-gray-400">
-              <p className="text-lg font-medium">Assistant Comptable IA</p>
+              <p className="text-lg font-medium">Assistant Comptable Julie</p>
               <p className="mt-1 text-sm">Posez une question ou demandez une analyse de vos données Excel.</p>
             </div>
           </div>

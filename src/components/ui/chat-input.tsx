@@ -46,7 +46,7 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
         placeholder="Posez votre question..."
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none disabled:opacity-50"
+        className="flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none disabled:opacity-50"
       />
       <button
         onClick={handleSend}

@@ -160,7 +160,7 @@ export const TaskpaneContent = () => {
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 p-6">
-        <h1 className="text-lg font-semibold text-gray-900">Assistant Comptable IA</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Assistant Comptable Julie</h1>
         <p className="text-center text-sm text-gray-500">
           Connectez-vous avec votre compte Microsoft pour accéder à l&apos;assistant.
         </p>
