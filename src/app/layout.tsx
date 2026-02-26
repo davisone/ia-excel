@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Assistant Comptable IA",
+  title: "Assistant Comptable Julie",
   description: "Assistant IA pour experts-comptables, intégré à Excel.",
 };
 

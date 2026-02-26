@@ -1,7 +1,7 @@
 import Script from "next/script";
 
 export const metadata = {
-  title: "Assistant Comptable IA",
+  title: "Assistant Comptable Julie",
 };
 
 const TaskpaneLayout = ({ children }: { children: React.ReactNode }) => {

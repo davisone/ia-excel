@@ -10,7 +10,7 @@
   <Version>1.0.0</Version>
   <ProviderName>DVS Web</ProviderName>
   <DefaultLocale>fr-FR</DefaultLocale>
-  <DisplayName DefaultValue="Assistant Comptable IA" />
+  <DisplayName DefaultValue="Assistant Comptable Julie" />
   <Description DefaultValue="Assistant IA pour experts-comptables, intégré à Excel." />
   <IconUrl DefaultValue="https://ia-excel.vercel.app/assets/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://ia-excel.vercel.app/assets/icon-80.png" />
@@ -81,7 +81,7 @@
         <bt:String id="ButtonLabel" DefaultValue="Assistant Comptable" />
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="ButtonTooltip" DefaultValue="Ouvrir l'assistant comptable IA pour analyser vos données." />
+        <bt:String id="ButtonTooltip" DefaultValue="Ouvrir l'assistant comptable Julie pour analyser vos données." />
       </bt:LongStrings>
     </Resources>
 
