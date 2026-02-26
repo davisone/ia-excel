@@ -164,13 +164,15 @@ export const TaskpaneContent = () => {
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-6 bg-gradient-to-br from-pink-50/50 via-white to-purple-50/50 p-6">
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 text-3xl font-bold text-white shadow-lg">
-          J
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-lg">
+          <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+          </svg>
         </div>
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-900">Assistant Comptable Julie</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Assistant Comptable</h1>
           <p className="mt-1.5 text-sm text-gray-400">
-            Connectez-vous pour accéder à votre assistante.
+            Connectez-vous pour accéder à votre assistant.
           </p>
         </div>
         <button
