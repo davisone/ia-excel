@@ -6,9 +6,10 @@ import { Message, ExcelData } from "@/types";
 interface UseChatOptions {
   conversationId: string | null;
   onConversationCreated?: (id: string) => void;
+  getToken: () => string | null;
 }
 
-export const useChat = ({ conversationId, onConversationCreated }: UseChatOptions) => {
+export const useChat = ({ conversationId, onConversationCreated, getToken }: UseChatOptions) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const mountedRef = useRef(false);
@@ -43,9 +44,15 @@ export const useChat = ({ conversationId, onConversationCreated }: UseChatOption
     setMessages((prev) => [...prev, assistantMessage]);
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const token = getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           message: content,
           conversationId,
@@ -111,7 +118,7 @@ export const useChat = ({ conversationId, onConversationCreated }: UseChatOption
         setIsStreaming(false);
       }
     }
-  }, [conversationId, onConversationCreated]);
+  }, [conversationId, onConversationCreated, getToken]);
 
   const loadMessages = useCallback((loadedMessages: Message[]) => {
     setMessages(loadedMessages);

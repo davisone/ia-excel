@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { conversations, messages } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { getUserFromRequest } from "@/lib/get-user";
 
 export const GET = async (
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const userId = (session.user as Record<string, unknown>).id as string;
+  const userId = user.id;
 
   const conversation = await db.query.conversations.findFirst({
     where: and(eq(conversations.id, id), eq(conversations.userId, userId)),
@@ -34,16 +33,16 @@ export const GET = async (
 };
 
 export const DELETE = async (
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const userId = (session.user as Record<string, unknown>).id as string;
+  const userId = user.id;
 
   const conversation = await db.query.conversations.findFirst({
     where: and(eq(conversations.id, id), eq(conversations.userId, userId)),

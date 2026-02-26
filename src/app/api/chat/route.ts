@@ -1,21 +1,20 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
 import OpenAI from "openai";
-import { authOptions } from "@/lib/auth";
 import { openai } from "@/lib/openai";
 import { buildSystemPrompt } from "@/lib/system-prompt";
 import { db } from "@/lib/db";
 import { conversations, messages } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { ChatRequest } from "@/types";
+import { getUserFromRequest } from "@/lib/get-user";
 
 export const POST = async (req: NextRequest) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !("id" in session.user)) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
     return new Response("Non autorisé", { status: 401 });
   }
 
-  const userId = (session.user as Record<string, unknown>).id as string;
+  const userId = user.id;
   const body: ChatRequest = await req.json();
   const { message, conversationId, excelData } = body;
 

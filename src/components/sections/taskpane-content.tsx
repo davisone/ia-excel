@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatContainer } from "@/components/sections/chat-container";
 import { ConversationList } from "@/components/sections/conversation-list";
 import { useChat } from "@/hooks/use-chat";
@@ -13,6 +13,7 @@ export const TaskpaneContent = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const tokenRef = useRef<string | null>(null);
 
   const { refreshData } = useExcelData();
 
@@ -24,38 +25,55 @@ export const TaskpaneContent = () => {
   const { messages, isStreaming, sendMessage, loadMessages } = useChat({
     conversationId: activeConversationId,
     onConversationCreated: handleConversationCreated,
+    getToken: () => tokenRef.current,
   });
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/session");
-      const data = await res.json();
-      setIsAuthenticated(!!data?.user);
-    } catch {
-      setIsAuthenticated(false);
+  // Helper pour les appels API avec le token
+  const authFetch = useCallback(async (url: string, options?: RequestInit) => {
+    const headers: Record<string, string> = {
+      ...(options?.headers as Record<string, string> ?? {}),
+    };
+    if (tokenRef.current) {
+      headers["Authorization"] = `Bearer ${tokenRef.current}`;
     }
+    return fetch(url, { ...options, headers });
   }, []);
 
+  // Vérifier l'auth au démarrage (tente cookies puis token stocké)
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
-      try {
-        const res = await fetch("/api/auth/session");
-        const data = await res.json();
-        if (!cancelled) setIsAuthenticated(!!data?.user);
-      } catch {
-        if (!cancelled) setIsAuthenticated(false);
+      // Essayer avec le cookie d'abord (accès direct navigateur)
+      const res = await fetch("/api/auth/session");
+      const data = await res.json();
+      if (!cancelled && data?.user) {
+        setIsAuthenticated(true);
+        return;
       }
+
+      // Essayer avec le token stocké en sessionStorage
+      const savedToken = sessionStorage.getItem("auth_token");
+      if (savedToken) {
+        tokenRef.current = savedToken;
+        const tokenRes = await authFetch("/api/conversations");
+        if (!cancelled && tokenRes.ok) {
+          setIsAuthenticated(true);
+          return;
+        }
+      }
+
+      if (!cancelled) setIsAuthenticated(false);
     };
     check();
     return () => { cancelled = true; };
-  }, []);
+  }, [authFetch]);
 
+  // Charger les conversations
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
     const load = async () => {
-      const res = await fetch("/api/conversations");
+      const res = await authFetch("/api/conversations");
       if (res.ok && !cancelled) {
         const data = await res.json();
         setConversations(data);
@@ -63,12 +81,12 @@ export const TaskpaneContent = () => {
     };
     load();
     return () => { cancelled = true; };
-  }, [isAuthenticated, refreshKey]);
+  }, [isAuthenticated, refreshKey, authFetch]);
 
   const handleSelectConversation = async (id: string) => {
     setActiveConversationId(id);
     setShowSidebar(false);
-    const res = await fetch(`/api/conversations/${id}`);
+    const res = await authFetch(`/api/conversations/${id}`);
     if (res.ok) {
       const data = await res.json();
       loadMessages(data.messages as Message[]);
@@ -101,9 +119,22 @@ export const TaskpaneContent = () => {
         dialog.addEventHandler(
           Office.EventType.DialogMessageReceived,
           (args: { message: string; origin: string | undefined } | { error: number }) => {
-            if ("message" in args && args.message === "auth_complete") {
+            if ("message" in args) {
+              try {
+                const data = JSON.parse(args.message);
+                if (data.type === "auth_complete" && data.token) {
+                  // Stocker le token
+                  tokenRef.current = data.token;
+                  sessionStorage.setItem("auth_token", data.token);
+                  setIsAuthenticated(true);
+                }
+              } catch {
+                // Ancien format (string simple) — fallback
+                if (args.message === "auth_complete") {
+                  setIsAuthenticated(true);
+                }
+              }
               dialog.close();
-              checkAuth();
             }
           }
         );
@@ -111,13 +142,12 @@ export const TaskpaneContent = () => {
         dialog.addEventHandler(
           Office.EventType.DialogEventReceived,
           () => {
-            // Dialog fermé manuellement - re-vérifier l'auth
-            checkAuth();
+            // Dialog fermé manuellement
           }
         );
       }
     );
-  }, [checkAuth]);
+  }, []);
 
   if (isAuthenticated === null) {
     return (
