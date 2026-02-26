@@ -133,10 +133,13 @@ export const TaskpaneContent = () => {
   }, [loadMessages]);
 
   const handleSend = async (content: string) => {
-    // Ne jamais bloquer l'envoi si Excel n'est pas dispo
+    // Ne jamais bloquer l'envoi si Excel n'est pas dispo (timeout 3s)
     let excelData = null;
     try {
-      excelData = await refreshData();
+      excelData = await Promise.race([
+        refreshData(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+      ]);
     } catch {
       // Excel pas prêt — on envoie sans données
     }
