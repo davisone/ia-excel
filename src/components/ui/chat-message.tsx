@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Message } from "@/types";
+import { parseExcelActions, getContentWithoutActions, summarizeActions } from "@/lib/excel-actions";
+import { writeExcelActions } from "@/lib/excel";
 
 interface ChatMessageProps {
   message: Message;
@@ -8,6 +11,17 @@ interface ChatMessageProps {
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   const isUser = message.role === "user";
+  const [applyState, setApplyState] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  const actionsBlock = !isUser ? parseExcelActions(message.content) : null;
+  const displayContent = actionsBlock ? getContentWithoutActions(message.content) : message.content;
+
+  const handleApply = async () => {
+    if (!actionsBlock) return;
+    setApplyState("loading");
+    const success = await writeExcelActions(actionsBlock);
+    setApplyState(success ? "done" : "error");
+  };
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
@@ -18,14 +32,64 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
           </svg>
         </div>
       )}
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
-          isUser
-            ? "bg-gradient-to-br from-pink-500 to-violet-500 text-white"
-            : "border border-white/40 bg-white/70 text-gray-900 backdrop-blur-sm"
-        }`}
-      >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+      <div className="flex max-w-[80%] flex-col gap-2">
+        <div
+          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+            isUser
+              ? "bg-gradient-to-br from-pink-500 to-violet-500 text-white"
+              : "border border-white/40 bg-white/70 text-gray-900 backdrop-blur-sm"
+          }`}
+        >
+          <p className="whitespace-pre-wrap">{displayContent}</p>
+        </div>
+
+        {actionsBlock && (
+          <div className="rounded-2xl border border-pink-200/50 bg-white/80 px-4 py-3 backdrop-blur-sm">
+            <p className="mb-2 text-xs font-medium text-gray-500">
+              Modifications propos\u00e9es :
+            </p>
+            <ul className="mb-3 space-y-1">
+              {summarizeActions(actionsBlock).map((summary, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                  <span className="h-1 w-1 rounded-full bg-pink-400" />
+                  {summary}
+                </li>
+              ))}
+            </ul>
+
+            {applyState === "idle" && (
+              <button
+                onClick={handleApply}
+                className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition-all hover:shadow-md hover:brightness-110"
+              >
+                Appliquer les modifications
+              </button>
+            )}
+            {applyState === "loading" && (
+              <div className="flex items-center justify-center gap-2 py-2">
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-400 [animation-delay:-0.3s]" />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-400 [animation-delay:-0.15s]" />
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-400" />
+              </div>
+            )}
+            {applyState === "done" && (
+              <div className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-2 text-xs font-medium text-emerald-600">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                Modifications appliqu\u00e9es
+              </div>
+            )}
+            {applyState === "error" && (
+              <button
+                onClick={handleApply}
+                className="w-full rounded-xl bg-red-50 px-4 py-2 text-xs font-medium text-red-600 transition-all hover:bg-red-100"
+              >
+                Erreur — R\u00e9essayer
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

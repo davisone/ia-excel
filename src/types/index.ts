@@ -44,3 +44,39 @@ export interface ChatRequest {
 export interface ConversationWithLastMessage extends Conversation {
   lastMessage: string | null;
 }
+
+// Actions Excel générées par l'IA
+export interface ExcelActionWrite {
+  type: "write";
+  range: string;
+  values: (string | number | boolean | null)[][];
+}
+
+export interface ExcelActionFormula {
+  type: "formula";
+  range: string;
+  formula: string;
+}
+
+export interface ExcelActionFormat {
+  type: "format";
+  range: string;
+  format: ExcelFormatOptions;
+}
+
+export interface ExcelFormatOptions {
+  bold?: boolean;
+  italic?: boolean;
+  fill?: string;
+  fontColor?: string;
+  fontSize?: number;
+  numberFormat?: string;
+  horizontalAlignment?: "left" | "center" | "right";
+  borders?: boolean;
+}
+
+export type ExcelAction = ExcelActionWrite | ExcelActionFormula | ExcelActionFormat;
+
+export interface ExcelActionsBlock {
+  actions: ExcelAction[];
+}
