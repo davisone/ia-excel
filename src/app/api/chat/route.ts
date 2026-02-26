@@ -43,11 +43,13 @@ export const POST = async (req: NextRequest) => {
     orderBy: (messages, { asc }) => [asc(messages.createdAt)],
   });
 
-  // Construire les messages pour OpenAI
+  // Construire les messages pour OpenAI (limité aux 20 derniers messages)
+  const MAX_HISTORY = 20;
+  const recentHistory = history.slice(-MAX_HISTORY);
   const systemPrompt = buildSystemPrompt(excelData);
   const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
-    ...history.map((m) => ({
+    ...recentHistory.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
@@ -55,7 +57,7 @@ export const POST = async (req: NextRequest) => {
 
   // Appel OpenAI en streaming
   const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4o-mini",
     messages: openaiMessages,
     stream: true,
   });
