@@ -94,12 +94,7 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
 
         switch (action.type) {
           case "write": {
-            // Calcule le range exact à partir de la cellule de départ + dimensions des values
-            const startCell = rangeAddr.includes(":") ? rangeAddr.split(":")[0] : rangeAddr;
-            const rows = action.values.length;
-            const cols = action.values[0]?.length ?? 1;
-            const targetRange = sheet.getRange(startCell).getResizedRange(rows - 1, cols - 1);
-            targetRange.values = action.values;
+            await applyWrite(context, sheet, rangeAddr, action.values);
             break;
           }
 
@@ -122,6 +117,31 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
       resolve(false);
     });
   });
+};
+
+// Écrit des valeurs cellule par cellule pour éviter les problèmes de dimensions
+const applyWrite = async (
+  context: Excel.RequestContext,
+  sheet: Excel.Worksheet,
+  rangeAddress: string,
+  values: (string | number | boolean | null)[][],
+) => {
+  // Déterminer la cellule de départ
+  const startCell = rangeAddress.includes(":") ? rangeAddress.split(":")[0] : rangeAddress;
+  const startRange = sheet.getRange(startCell);
+  startRange.load("rowIndex, columnIndex");
+  await context.sync();
+
+  const startRow = startRange.rowIndex;
+  const startCol = startRange.columnIndex;
+
+  // Écrire chaque cellule individuellement
+  for (let r = 0; r < values.length; r++) {
+    for (let c = 0; c < values[r].length; c++) {
+      const cell = sheet.getCell(startRow + r, startCol + c);
+      cell.values = [[values[r][c]]];
+    }
+  }
 };
 
 // Applique une formule sur une cellule ou une plage
