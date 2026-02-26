@@ -8,7 +8,11 @@ const ensureOfficeReady = (): Promise<void> => {
   if (typeof Office === "undefined") return Promise.reject(new Error("Office non disponible"));
   if (!officeReady) {
     officeReady = new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error("Office.onReady timeout")), 5000);
+      const timeout = setTimeout(() => {
+        // Réinitialiser pour permettre un nouvel essai au prochain appel
+        officeReady = null;
+        reject(new Error("Office.onReady timeout"));
+      }, 5000);
       Office.onReady(() => {
         clearTimeout(timeout);
         resolve();
@@ -83,9 +87,13 @@ export const readExcelData = async (): Promise<ExcelData | null> => {
 
 // Exécute un ensemble d'actions Excel (écriture, formules, mise en forme)
 export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boolean> => {
+  console.log("[Excel] writeExcelActions appelé avec", block.actions.length, "actions");
+
   try {
     await ensureOfficeReady();
-  } catch {
+    console.log("[Excel] Office prêt");
+  } catch (err) {
+    console.error("[Excel] Office non prêt:", err);
     return false;
   }
 
@@ -93,8 +101,10 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
     Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
 
-      for (const action of block.actions) {
+      for (let i = 0; i < block.actions.length; i++) {
+        const action = block.actions[i];
         const rangeAddr = cleanRange(action.range);
+        console.log(`[Excel] Action ${i + 1}/${block.actions.length}: ${action.type} sur ${rangeAddr}`);
 
         switch (action.type) {
           case "write": {
@@ -115,6 +125,7 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
       }
 
       await context.sync();
+      console.log("[Excel] Toutes les actions appliquées avec succès");
       resolve(true);
     }).catch((err) => {
       console.error("[Excel] Erreur écriture:", err);

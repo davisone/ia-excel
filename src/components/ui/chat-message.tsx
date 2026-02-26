@@ -19,8 +19,13 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
   const handleApply = async () => {
     if (!actionsBlock) return;
     setApplyState("loading");
-    const success = await writeExcelActions(actionsBlock);
-    setApplyState(success ? "done" : "error");
+    try {
+      const success = await writeExcelActions(actionsBlock);
+      setApplyState(success ? "done" : "error");
+    } catch (err) {
+      console.error("[Excel] Exception dans handleApply:", err);
+      setApplyState("error");
+    }
   };
 
   return (
