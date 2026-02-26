@@ -155,7 +155,11 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
         }
       }
 
-      await context.sync();
+      try {
+        await context.sync();
+      } catch (syncErr) {
+        console.warn("[Excel] Sync final partiel:", syncErr);
+      }
       console.log("[Excel] Toutes les actions appliquées avec succès");
       resolve(true);
     }).catch((err) => {
@@ -233,56 +237,81 @@ const applyFormat = async (
   const fmt = action.format;
   if (!fmt || typeof fmt !== "object") return;
 
+  console.log("[Excel] Format payload:", JSON.stringify(fmt));
+
+  const applyProp = async (name: string, fn: () => void | Promise<void>) => {
+    try {
+      await fn();
+    } catch (err) {
+      console.error(`[Excel] Format "${name}" échoué:`, err);
+    }
+  };
+
   if (typeof fmt.bold === "boolean") {
-    range.format.font.bold = fmt.bold;
+    await applyProp("bold", () => { range.format.font.bold = fmt.bold as boolean; });
   }
   if (typeof fmt.italic === "boolean") {
-    range.format.font.italic = fmt.italic;
+    await applyProp("italic", () => { range.format.font.italic = fmt.italic as boolean; });
   }
   if (typeof fmt.fill === "string" && fmt.fill) {
-    range.format.fill.color = fmt.fill;
+    await applyProp("fill", () => { range.format.fill.color = fmt.fill as string; });
   }
   if (typeof fmt.fontColor === "string" && fmt.fontColor) {
-    range.format.font.color = fmt.fontColor;
+    await applyProp("fontColor", () => { range.format.font.color = fmt.fontColor as string; });
   }
   if (typeof fmt.fontSize === "number" && fmt.fontSize > 0) {
-    range.format.font.size = fmt.fontSize;
+    await applyProp("fontSize", () => { range.format.font.size = fmt.fontSize as number; });
   }
   if (typeof fmt.numberFormat === "string" && fmt.numberFormat) {
-    range.load("rowCount, columnCount");
-    await context.sync();
-    const nf: string[][] = [];
-    for (let r = 0; r < range.rowCount; r++) {
-      const row: string[] = [];
-      for (let c = 0; c < range.columnCount; c++) {
-        row.push(fmt.numberFormat);
+    const nfValue = fmt.numberFormat;
+    await applyProp("numberFormat", async () => {
+      range.load("rowCount, columnCount");
+      await context.sync();
+      const nf: string[][] = [];
+      for (let r = 0; r < range.rowCount; r++) {
+        const row: string[] = [];
+        for (let c = 0; c < range.columnCount; c++) {
+          row.push(nfValue);
+        }
+        nf.push(row);
       }
-      nf.push(row);
-    }
-    range.numberFormat = nf;
+      range.numberFormat = nf;
+    });
   }
   if (typeof fmt.horizontalAlignment === "string" && fmt.horizontalAlignment) {
-    const alignMap: Record<string, Excel.HorizontalAlignment> = {
-      left: Excel.HorizontalAlignment.left,
-      center: Excel.HorizontalAlignment.center,
-      right: Excel.HorizontalAlignment.right,
-    };
-    const mapped = alignMap[fmt.horizontalAlignment.toLowerCase()];
-    if (mapped) {
-      range.format.horizontalAlignment = mapped;
-    }
+    const alignValue = fmt.horizontalAlignment.toLowerCase();
+    await applyProp("horizontalAlignment", () => {
+      const alignMap: Record<string, Excel.HorizontalAlignment> = {
+        left: Excel.HorizontalAlignment.left,
+        center: Excel.HorizontalAlignment.center,
+        right: Excel.HorizontalAlignment.right,
+      };
+      const mapped = alignMap[alignValue];
+      if (mapped) {
+        range.format.horizontalAlignment = mapped;
+      }
+    });
   }
   if (fmt.borders === true) {
-    const edges: Excel.BorderIndex[] = [
-      Excel.BorderIndex.edgeTop,
-      Excel.BorderIndex.edgeBottom,
-      Excel.BorderIndex.edgeLeft,
-      Excel.BorderIndex.edgeRight,
-    ];
-    for (const edge of edges) {
-      const b = range.format.borders.getItem(edge);
-      b.style = "Thin" as unknown as Excel.BorderLineStyle;
-      b.color = "#000000";
-    }
+    await applyProp("borders", () => {
+      const edges: Excel.BorderIndex[] = [
+        Excel.BorderIndex.edgeTop,
+        Excel.BorderIndex.edgeBottom,
+        Excel.BorderIndex.edgeLeft,
+        Excel.BorderIndex.edgeRight,
+      ];
+      for (const edge of edges) {
+        const b = range.format.borders.getItem(edge);
+        b.style = "Thin" as unknown as Excel.BorderLineStyle;
+        b.color = "#000000";
+      }
+    });
+  }
+
+  // Sync isolé pour le format — les erreurs sont catchées sans bloquer le reste
+  try {
+    await context.sync();
+  } catch (err) {
+    console.error("[Excel] Format sync échoué:", err);
   }
 };
