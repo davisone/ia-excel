@@ -185,24 +185,21 @@ export const TaskpaneContent = () => {
 
   return (
     <div className="flex h-screen">
-      <button
-        onClick={() => setShowSidebar(!showSidebar)}
-        className="fixed left-2 top-14 z-20 rounded-xl border border-white/40 bg-white/60 p-1.5 text-gray-600 shadow-sm backdrop-blur-sm hover:bg-white/80"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
       {showSidebar && (
-        <div className="absolute inset-0 z-10 w-64">
-          <ConversationList
-            conversations={conversations}
-            activeId={activeConversationId}
-            onSelect={handleSelectConversation}
-            onNew={handleNewConversation}
+        <>
+          <div
+            className="fixed inset-0 z-10 bg-black/20 backdrop-blur-sm"
+            onClick={() => setShowSidebar(false)}
           />
-        </div>
+          <div className="absolute inset-0 z-20 w-64">
+            <ConversationList
+              conversations={conversations}
+              activeId={activeConversationId}
+              onSelect={handleSelectConversation}
+              onNew={handleNewConversation}
+            />
+          </div>
+        </>
       )}
 
       <div className="flex-1">
@@ -210,6 +207,7 @@ export const TaskpaneContent = () => {
           messages={messages}
           isStreaming={isStreaming}
           onSend={handleSend}
+          onToggleSidebar={() => setShowSidebar(!showSidebar)}
         />
       </div>
     </div>

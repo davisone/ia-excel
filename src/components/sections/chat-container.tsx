@@ -10,6 +10,7 @@ interface ChatContainerProps {
   messages: Message[];
   isStreaming: boolean;
   onSend: (message: string) => void;
+  onToggleSidebar?: () => void;
 }
 
 const suggestions = [
@@ -18,7 +19,7 @@ const suggestions = [
   "Explique-moi cette écriture",
 ];
 
-export const ChatContainer = ({ messages, isStreaming, onSend }: ChatContainerProps) => {
+export const ChatContainer = ({ messages, isStreaming, onSend, onToggleSidebar }: ChatContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,17 +29,30 @@ export const ChatContainer = ({ messages, isStreaming, onSend }: ChatContainerPr
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-pink-50/50 via-white to-purple-50/50">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-white/30 bg-white/60 px-4 py-3 backdrop-blur-xl">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-sm font-bold text-white shadow-md">
-          J
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-900">Julie</p>
-          <div className="flex items-center gap-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <p className="text-xs text-gray-400">En ligne</p>
+      <div className="flex items-center justify-between border-b border-white/30 bg-white/60 px-4 py-3 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-sm font-bold text-white shadow-md">
+            J
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Julie</p>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <p className="text-xs text-gray-400">En ligne</p>
+            </div>
           </div>
         </div>
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-white/50 hover:text-gray-600"
+            title="Historique"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Messages */}
