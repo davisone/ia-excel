@@ -100,7 +100,13 @@ export const TaskpaneContent = () => {
   };
 
   const handleSend = async (content: string) => {
-    const excelData = await refreshData();
+    // Ne jamais bloquer l'envoi si Excel n'est pas dispo
+    let excelData = null;
+    try {
+      excelData = await refreshData();
+    } catch {
+      // Excel pas prêt — on envoie sans données
+    }
     sendMessage(content, excelData);
   };
 

@@ -1,14 +1,18 @@
 /// <reference types="office-js" />
 import { ExcelData, SheetData, SelectionData, ExcelAction, ExcelActionsBlock } from "@/types";
 
-// Garantit que Office.js est prêt avant toute opération
+// Garantit que Office.js est prêt avant toute opération (avec timeout)
 let officeReady: Promise<void> | null = null;
 
 const ensureOfficeReady = (): Promise<void> => {
   if (typeof Office === "undefined") return Promise.reject(new Error("Office non disponible"));
   if (!officeReady) {
-    officeReady = new Promise((resolve) => {
-      Office.onReady(() => resolve());
+    officeReady = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Office.onReady timeout")), 5000);
+      Office.onReady(() => {
+        clearTimeout(timeout);
+        resolve();
+      });
     });
   }
   return officeReady;
