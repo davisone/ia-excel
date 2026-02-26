@@ -14,6 +14,13 @@ const ensureOfficeReady = (): Promise<void> => {
   return officeReady;
 };
 
+// Nettoie une adresse de range (retire le nom de feuille si présent)
+const cleanRange = (range: string): string => {
+  // "Feuil1!A1:B5" → "A1:B5"
+  const idx = range.indexOf("!");
+  return idx !== -1 ? range.slice(idx + 1) : range;
+};
+
 export const readExcelData = async (): Promise<ExcelData | null> => {
   try {
     await ensureOfficeReady();
@@ -63,7 +70,8 @@ export const readExcelData = async (): Promise<ExcelData | null> => {
         selection: selectionData,
         workbookSheets: sheetNames,
       });
-    }).catch(() => {
+    }).catch((err) => {
+      console.error("[Excel] Erreur lecture:", err);
       resolve(null);
     });
   });
@@ -82,7 +90,8 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
       const sheet = context.workbook.worksheets.getActiveWorksheet();
 
       for (const action of block.actions) {
-        const range = sheet.getRange(action.range);
+        const rangeAddr = cleanRange(action.range);
+        const range = sheet.getRange(rangeAddr);
 
         switch (action.type) {
           case "write":
@@ -90,7 +99,7 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
             break;
 
           case "formula":
-            applyFormula(range, action.range, action.formula);
+            await applyFormula(context, sheet, rangeAddr, action.formula);
             break;
 
           case "format":
@@ -101,24 +110,45 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
 
       await context.sync();
       resolve(true);
-    }).catch(() => {
+    }).catch((err) => {
+      console.error("[Excel] Erreur écriture:", err);
       resolve(false);
     });
   });
 };
 
 // Applique une formule sur une cellule ou une plage
-const applyFormula = (range: Excel.Range, rangeAddress: string, formula: string) => {
-  // Si la plage contient ":", c'est un range multi-cellules → formules individuelles
-  if (rangeAddress.includes(":")) {
-    range.formulas = range.formulas; // force le chargement
-    range.load("rowCount, columnCount");
-    // Pour les plages, on utilise formulasR1C1 ou on set formulas sur chaque cellule
-    // La méthode la plus simple : utiliser la même formule pour toute la plage
-    range.formulas = [[formula]];
-  } else {
-    range.formulas = [[formula]];
+const applyFormula = async (
+  context: Excel.RequestContext,
+  sheet: Excel.Worksheet,
+  rangeAddress: string,
+  formula: string,
+) => {
+  if (!rangeAddress.includes(":")) {
+    // Cellule unique
+    const cell = sheet.getRange(rangeAddress);
+    cell.formulas = [[formula]];
+    return;
   }
+
+  // Plage multi-cellules : déterminer les dimensions puis remplir
+  const range = sheet.getRange(rangeAddress);
+  range.load("rowCount, columnCount");
+  await context.sync();
+
+  const rows = range.rowCount;
+  const cols = range.columnCount;
+
+  // Construire un tableau 2D de formules avec les bonnes dimensions
+  const formulas: string[][] = [];
+  for (let r = 0; r < rows; r++) {
+    const row: string[] = [];
+    for (let c = 0; c < cols; c++) {
+      row.push(formula);
+    }
+    formulas.push(row);
+  }
+  range.formulas = formulas;
 };
 
 // Applique la mise en forme sur une plage
