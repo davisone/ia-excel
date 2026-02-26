@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { ExcelData } from "@/types";
-import { readExcelData } from "@/lib/excel";
+import { readExcelData, ensureOfficeReady } from "@/lib/excel";
 
 export const useExcelData = () => {
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
@@ -23,6 +23,38 @@ export const useExcelData = () => {
     }
     return data;
   }, []);
+
+  // Écouter les changements de feuille active
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+
+    const register = async () => {
+      try {
+        await ensureOfficeReady();
+        await Excel.run(async (context) => {
+          const handler = context.workbook.worksheets.onActivated.add(async () => {
+            await refreshData();
+          });
+          await context.sync();
+          cleanup = () => {
+            Excel.run(async (ctx) => {
+              handler.remove();
+              await ctx.sync();
+            }).catch(() => {});
+          };
+        });
+      } catch {
+        // Pas dans un environnement Office — on ignore
+      }
+    };
+
+    register();
+
+    return () => {
+      mountedRef.current = false;
+      cleanup?.();
+    };
+  }, [refreshData]);
 
   return { excelData, isLoading, refreshData };
 };
