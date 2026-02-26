@@ -5,6 +5,7 @@ import { ChatContainer } from "@/components/sections/chat-container";
 import { ConversationList } from "@/components/sections/conversation-list";
 import { useChat } from "@/hooks/use-chat";
 import { useExcelData } from "@/hooks/use-excel-data";
+import { ensureOfficeReady } from "@/lib/excel";
 import { Conversation, Message } from "@/types";
 
 export const TaskpaneContent = () => {
@@ -16,6 +17,13 @@ export const TaskpaneContent = () => {
   const tokenRef = useRef<string | null>(null);
 
   const { refreshData } = useExcelData();
+
+  // Démarrer l'initialisation Office dès que possible
+  useEffect(() => {
+    ensureOfficeReady().catch(() => {
+      // Pas dans un environnement Office — pas bloquant
+    });
+  }, []);
 
   const handleConversationCreated = useCallback((id: string) => {
     setActiveConversationId(id);

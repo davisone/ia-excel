@@ -1,22 +1,37 @@
 /// <reference types="office-js" />
 import { ExcelData, SheetData, SelectionData, ExcelAction, ExcelActionsBlock } from "@/types";
 
-// Garantit que Office.js est prêt avant toute opération (avec timeout)
+// Singleton d'initialisation Office
+// Attend que le script office.js soit chargé (polling), puis que l'hôte soit prêt
 let officeReady: Promise<void> | null = null;
 
-const ensureOfficeReady = (): Promise<void> => {
-  if (typeof Office === "undefined") return Promise.reject(new Error("Office non disponible"));
+export const ensureOfficeReady = (): Promise<void> => {
   if (!officeReady) {
-    officeReady = new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        // Réinitialiser pour permettre un nouvel essai au prochain appel
-        officeReady = null;
-        reject(new Error("Office.onReady timeout"));
-      }, 5000);
-      Office.onReady(() => {
-        clearTimeout(timeout);
-        resolve();
-      });
+    officeReady = new Promise<void>((resolve, reject) => {
+      let attempts = 0;
+
+      const waitForScript = () => {
+        if (typeof Office !== "undefined") {
+          // Script chargé — attendre que l'hôte Office soit prêt (pas de timeout ici)
+          Office.onReady(() => {
+            console.log("[Office] Prêt");
+            resolve();
+          });
+          return;
+        }
+
+        attempts++;
+        if (attempts > 50) {
+          // ~10s sans script → pas dans un environnement Office
+          officeReady = null;
+          reject(new Error("Office.js non disponible"));
+          return;
+        }
+
+        setTimeout(waitForScript, 200);
+      };
+
+      waitForScript();
     });
   }
   return officeReady;
