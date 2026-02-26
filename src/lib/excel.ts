@@ -1,8 +1,25 @@
 /// <reference types="office-js" />
 import { ExcelData, SheetData, SelectionData, ExcelAction, ExcelActionsBlock } from "@/types";
 
+// Garantit que Office.js est prêt avant toute opération
+let officeReady: Promise<void> | null = null;
+
+const ensureOfficeReady = (): Promise<void> => {
+  if (typeof Office === "undefined") return Promise.reject(new Error("Office non disponible"));
+  if (!officeReady) {
+    officeReady = new Promise((resolve) => {
+      Office.onReady(() => resolve());
+    });
+  }
+  return officeReady;
+};
+
 export const readExcelData = async (): Promise<ExcelData | null> => {
-  if (typeof Office === "undefined" || !Office.context) return null;
+  try {
+    await ensureOfficeReady();
+  } catch {
+    return null;
+  }
 
   return new Promise((resolve) => {
     Excel.run(async (context) => {
@@ -54,7 +71,11 @@ export const readExcelData = async (): Promise<ExcelData | null> => {
 
 // Exécute un ensemble d'actions Excel (écriture, formules, mise en forme)
 export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boolean> => {
-  if (typeof Office === "undefined" || !Office.context) return false;
+  try {
+    await ensureOfficeReady();
+  } catch {
+    return false;
+  }
 
   return new Promise((resolve) => {
     Excel.run(async (context) => {
