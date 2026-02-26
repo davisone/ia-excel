@@ -91,20 +91,27 @@ export const writeExcelActions = async (block: ExcelActionsBlock): Promise<boole
 
       for (const action of block.actions) {
         const rangeAddr = cleanRange(action.range);
-        const range = sheet.getRange(rangeAddr);
 
         switch (action.type) {
-          case "write":
-            range.values = action.values;
+          case "write": {
+            // Calcule le range exact à partir de la cellule de départ + dimensions des values
+            const startCell = rangeAddr.includes(":") ? rangeAddr.split(":")[0] : rangeAddr;
+            const rows = action.values.length;
+            const cols = action.values[0]?.length ?? 1;
+            const targetRange = sheet.getRange(startCell).getResizedRange(rows - 1, cols - 1);
+            targetRange.values = action.values;
             break;
+          }
 
           case "formula":
             await applyFormula(context, sheet, rangeAddr, action.formula);
             break;
 
-          case "format":
-            applyFormat(range, action);
+          case "format": {
+            const range = sheet.getRange(rangeAddr);
+            await applyFormat(context, range, action);
             break;
+          }
         }
       }
 
@@ -152,7 +159,11 @@ const applyFormula = async (
 };
 
 // Applique la mise en forme sur une plage
-const applyFormat = (range: Excel.Range, action: ExcelAction & { type: "format" }) => {
+const applyFormat = async (
+  context: Excel.RequestContext,
+  range: Excel.Range,
+  action: ExcelAction & { type: "format" },
+) => {
   const fmt = action.format;
 
   if (fmt.bold !== undefined) {
@@ -171,7 +182,18 @@ const applyFormat = (range: Excel.Range, action: ExcelAction & { type: "format" 
     range.format.font.size = fmt.fontSize;
   }
   if (fmt.numberFormat) {
-    range.numberFormat = [[fmt.numberFormat]];
+    // Charger les dimensions pour construire un tableau 2D correct
+    range.load("rowCount, columnCount");
+    await context.sync();
+    const nf: string[][] = [];
+    for (let r = 0; r < range.rowCount; r++) {
+      const row: string[] = [];
+      for (let c = 0; c < range.columnCount; c++) {
+        row.push(fmt.numberFormat);
+      }
+      nf.push(row);
+    }
+    range.numberFormat = nf;
   }
   if (fmt.horizontalAlignment) {
     const alignMap: Record<string, Excel.HorizontalAlignment> = {
