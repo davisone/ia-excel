@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Message } from "@/types";
 import { parseExcelActions, getContentWithoutActions, summarizeActions } from "@/lib/excel-actions";
 import { writeExcelActions } from "@/lib/excel";
@@ -45,7 +47,15 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
               : "border border-white/40 bg-white/70 text-gray-900 backdrop-blur-sm"
           }`}
         >
-          <p className="whitespace-pre-wrap">{displayContent}</p>
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{displayContent}</p>
+          ) : (
+            <div className="prose prose-sm max-w-none prose-headings:mb-2 prose-headings:mt-3 prose-headings:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-code:rounded prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-pink-600 prose-code:before:content-none prose-code:after:content-none prose-pre:my-2 prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-table:my-2 prose-th:bg-gray-50 prose-th:px-3 prose-th:py-1.5 prose-td:px-3 prose-td:py-1.5 prose-strong:text-gray-900 prose-a:text-pink-600 prose-a:no-underline hover:prose-a:underline">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {displayContent}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {actionsBlock && (

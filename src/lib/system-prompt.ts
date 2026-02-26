@@ -1,5 +1,7 @@
 import { ExcelData } from "@/types";
 
+const MAX_ROWS = 100;
+
 const BASE_PROMPT = `Tu es un assistant expert-comptable français de haut niveau, intégré à Microsoft Excel. Tu assistes des professionnels de la comptabilité (experts-comptables, collaborateurs de cabinet, DAF) dans leur travail quotidien.
 
 TES COMPÉTENCES MÉTIER :
@@ -95,10 +97,20 @@ export const buildSystemPrompt = (excelData: ExcelData | null): string => {
     prompt += `Colonnes : ${excelData.activeSheet.headers.join(" | ")}\n`;
   }
 
-  prompt += `\nDonnées (${excelData.activeSheet.rows.length} lignes) :\n`;
+  const totalRows = excelData.activeSheet.rows.length;
+  const isTruncated = totalRows > MAX_ROWS;
+  const rows = isTruncated
+    ? excelData.activeSheet.rows.slice(0, MAX_ROWS)
+    : excelData.activeSheet.rows;
 
-  for (const row of excelData.activeSheet.rows) {
+  prompt += `\nDonnées (${totalRows} lignes${isTruncated ? `, seules les ${MAX_ROWS} premières sont affichées` : ""}) :\n`;
+
+  for (const row of rows) {
     prompt += row.join(" | ") + "\n";
+  }
+
+  if (isTruncated) {
+    prompt += `\n⚠️ ATTENTION : les données sont tronquées. Seules les ${MAX_ROWS} premières lignes sur ${totalRows} sont visibles. Si l'utilisateur pose une question qui nécessite les données complètes, préviens-le que tu n'as accès qu'aux ${MAX_ROWS} premières lignes et que ta réponse pourrait être incomplète.\n`;
   }
 
   if (excelData.selection) {
